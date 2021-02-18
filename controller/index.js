@@ -2,6 +2,8 @@ const db = require("../models");
 const bcrypt = require("bcryptjs");
 const authCheck = require("../configs/isAuthenticated.js");
 const mongoos = require("mongoose");
+const axios = require("axios");
+require("dotenv").config();
 
 module.exports = {
     //Get functions
@@ -19,6 +21,25 @@ module.exports = {
                 res.json(user);
             })
             .catch(err => res.json(err));
+    },
+    //Search stock
+    getStockInfo: (req, res) => {
+        //Take in symbol variable inside req.body object
+        console.log(req.body);
+        axios.get(`https://finnhub.io/api/v1/quote?symbol=${req.body.symbol}&token=${process.env.apiKey}`)
+            .then(results => {
+                res.json(results);
+            })
+            .catch(err => res.json(err))
+    },
+    getCompanyInfo: (req, res) => {
+        //Take in company variable inside req.body object
+        console.log(req.body);
+        axios.get(`https://finnhub.io/api/v1//stock/profile2?${req.body.company}&token=${process.send.apiKey}`)
+            .then(results => {
+                res.json(results);
+            })
+            .catch(err => res.json(err))
     },
     //Post functions
     //Login
