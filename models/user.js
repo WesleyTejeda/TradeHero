@@ -18,6 +18,10 @@ const userSchema = new mongoose.SchemaType({
     password: {
         type: String,
         required: true
+    },
+    currency: {
+        type: Number,
+        default: 0
     }
 })
 const User = mongoose.model("User", userSchema);

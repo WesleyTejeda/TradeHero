@@ -7,6 +7,10 @@ const portfolioSchema = new Schema ({
         required: true,
         unique: true
     },
+    totalInvested: {
+        type: Number,
+        default: 0
+    },
     stocks: [
         {
             type: Schema.Types.ObjectId,
