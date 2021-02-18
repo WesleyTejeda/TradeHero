@@ -6,8 +6,11 @@ const stockSchema = new Schema ({
         type: String,
         required: true
     },
-    price: {
+    priceBought: {
         type: Number
+    },
+    dateBought: {
+        type: String
     },
     percentChange: {
         type: Number
