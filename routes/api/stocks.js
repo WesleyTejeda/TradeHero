@@ -3,6 +3,7 @@ const controller = require("../../controller");
 
 //Matches /api/stocks/
 router.route("/")
+    //Takes in query object {symbol}
     .get(controller.getStockInfo)
     //Takes in body object {username, name, priceBought, quantity, dateBought}
     .put(controller.buyStock)

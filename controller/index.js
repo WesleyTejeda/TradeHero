@@ -26,17 +26,19 @@ module.exports = {
         //Take in symbol variable inside req.query object
         console.log(req.query);
         axios.get(`https://finnhub.io/api/v1/quote?symbol=${req.query.symbol}&token=${process.env.apiKey}`)
-            .then(results => {
-                res.json(results);
+            .then(({ data }) => {
+                console.log(data);
+                res.json(data);
             })
             .catch(err => res.json(err))
     },
     getCompanyInfo: (req, res) => {
-        //Take in company variable inside req.query object
+        //Take in company symbol variable inside req.query object
         console.log(req.query);
-        axios.get(`https://finnhub.io/api/v1//stock/profile2?${req.query.company}&token=${process.env.apiKey}`)
-            .then(results => {
-                res.json(results);
+        axios.get(`https://finnhub.io/api/v1//stock/profile2?symbol=${req.query.symbol}&token=${process.env.apiKey}`)
+            .then(({ data }) => {
+                console.log(data);
+                res.json(data);
             })
             .catch(err => res.json(err))
     },
@@ -79,7 +81,7 @@ module.exports = {
                         .then(account => {
                             req.session.username = account.username;
                             console.log(req.session);
-                            db.Portfolio.create(req.body.username)
+                            db.Portfolio.create({ username: req.body.username})
                                 .then(results => console.log("Portfolio initialized"))
                                 .catch(err => res.json(err))
                             res.status(200).json({msg: "Signed up and logged in."})
