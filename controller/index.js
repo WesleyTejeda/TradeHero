@@ -1,7 +1,6 @@
 const db = require("../models");
 const bcrypt = require("bcryptjs");
 const authCheck = require("../configs/isAuthenticated.js");
-const mongoos = require("mongoose");
 const axios = require("axios");
 require("dotenv").config();
 
@@ -93,7 +92,7 @@ module.exports = {
             })
     },
     loginStatus: (req, res) => {
-        authcheck(req, res);
+        authCheck(req, res);
     },
     //Put functions
     updatePassword: (req, res) => {
