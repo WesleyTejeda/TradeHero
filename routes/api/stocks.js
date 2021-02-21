@@ -2,7 +2,7 @@ const router = require("express").Router();
 const controller = require("../../controller");
 
 //Matches /api/stocks/
-router.use("/")
+router.route("/")
     .get(controller.getStockInfo)
     //Takes in body object {username, name, priceBought, quantity, dateBought}
     .put(controller.buyStock)
@@ -10,7 +10,7 @@ router.use("/")
     .delete(controller.sellStock)
 
 //Matches /api/stocks/company
-router.user("/company")
+router.route("/company")
     //Takes in req.query object {company}
     .get(controller.getCompanyInfo)
 
