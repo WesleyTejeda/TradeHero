@@ -7,16 +7,15 @@ const stockSchema = new Schema ({
         required: true
     },
     priceBought: {
-        type: Number
+        type: Number,
+        required: true
     },
     dateBought: {
         type: String
     },
-    percentChange: {
-        type: Number
-    },
-    asOfDate: {
-        type: String
+    quantity: {
+        type: Number,
+        required: true
     }
 })
 

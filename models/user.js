@@ -21,7 +21,7 @@ const userSchema = new mongoose.SchemaType({
     },
     currency: {
         type: Number,
-        default: 0
+        default: 5000
     }
 })
 const User = mongoose.model("User", userSchema);

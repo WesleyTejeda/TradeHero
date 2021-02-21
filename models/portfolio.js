@@ -16,6 +16,19 @@ const portfolioSchema = new Schema ({
             type: Schema.Types.ObjectId,
             ref: "Stock"
         }
+    ],
+    transactions: [
+        {
+            quantity: {
+                type: Number
+            },
+            revenue: {
+                type: Number
+            },
+            name: {
+                type: String
+            }
+        }
     ]
 })
 
