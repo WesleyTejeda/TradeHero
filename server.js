@@ -29,6 +29,7 @@ app.use(sessions({
 }))
 
 //Pulls in API routes
+app.unsubscribe(routes);
 
 //Sends all other reqs to React App
 app.get("*", (req, res) => {
