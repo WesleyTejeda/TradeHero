@@ -1,4 +1,4 @@
-const router = require("express").router();
+const router = require("express").Router();
 const controller = require("../../controller");
 
 //Matches /api/stocks/
@@ -8,7 +8,7 @@ router.use("/")
     .put(controller.buyStock)
     //Takes in body object {username, name, quantity}
     .delete(controller.sellStock)
-    
+
 //Matches /api/stocks/company
 router.user("/company")
     //Takes in req.query object {company}

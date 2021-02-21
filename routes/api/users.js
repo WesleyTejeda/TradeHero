@@ -1,4 +1,4 @@
-const router = require("express").router();
+const router = require("express").Router();
 const controller = require("../../controller");
 
 //Matches with /api/users
@@ -14,7 +14,7 @@ router.route("/login")
     .get(controller.loginStatus)
     //Takes in body object {username, password}
     .post(controller.loginUser)
-    
+
 //Matches with /api/users/logout/
 router.route("/logout")
     //Logs out user
