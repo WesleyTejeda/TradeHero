@@ -6,18 +6,21 @@ require("dotenv").config();
 
 module.exports = {
     //Get functions
-    //Get user profile with portfolio w/ stocks populated
+    //Get user portfolio w/ stocks populated
     getUserProfile: (req, res) => {
         console.log(req.query);
-        db.User.findOne({ username: req.query.username }).populate({
-            path: "portfolios", populate: {
-                path: "stocks",
-                model: "Stock"
-            }
-        })
+        let userData = {
+            currency: 0,
+            portfolio: {}
+        }
+        db.User.findOne({ username: req.query.username })
+            .then(({ currency }) => userData.currency = currency)
+            .catch(err => res.json(err))
+        db.Portfolio.findOne({ username: req.query.username }).populate("stocks")
             .then(user => {
                 console.log(user);
-                res.json(user);
+                userData.portfolio = user;
+                res.json(userData);
             })
             .catch(err => res.json(err));
     },
@@ -105,24 +108,35 @@ module.exports = {
             .then(results => res.json({ msg: "Password updated" }))
             .catch(err => res.json(err))
     },
-    buyStock: (req, res) =>{
-        //Takes in body object {username, name, priceBought, quantity, dateBought}
+    buyStock: async (req, res) =>{
+        //Takes in body object {username, name, quantity}
         console.log(req.body);
-        let buyRequest = {name: req.body.name, priceBought: req.body.priceBought, quantity: req.body.quantity, dateBought: req.body.dateBought};
+        const getBuyRate = () => {
+            console.log("Awaiting price ========");
+            return new Promise(resolve => {
+                axios.get(`https://finnhub.io/api/v1/quote?symbol=${req.body.name}&token=${process.env.apiKey}`)
+                    .then(({ data }) => resolve(data.c))
+                    .catch(err => res.json(err))
+                    })
+        }
+        let buyRate = await getBuyRate();
+        let buyRequest = {name: req.body.name, priceBought: parseInt(buyRate), quantity: parseInt(req.body.quantity), dateBought: Date.now()};
         //Checks if user can buy the stocks based on quantity and price.
-        db.User.find({ username: req.body.username })
+        db.User.findOne({ username: req.body.username })
             .then(({ currency }) => {
                 //If purchase is greater than user's balance, cancel the request
-                if(currency < buyRequest.quantity * buyRequest.priceBought) {
+                console.log(currency);
+                if(parseInt(currency) < (buyRequest.quantity * buyRequest.priceBought)) {
                     res.json({msg: "You do not have sufficient funds for this purchase. Please check your balance."})
                 }
                 else { 
-                    let newBalance = currency - (buyRequest.quantity * buyRequest.priceBought);
+                    let newBalance = parseInt(currency) - (buyRequest.quantity * buyRequest.priceBought);
                     db.User.findOneAndUpdate({ username: req.body.username }, { $set: { currency: newBalance }})
                         .then(results => console.log(results))
                         .catch(err => console.log(err))
                 }
             })
+            .catch(err => res.json(err))
             //Creates stock purchase and then inserts bought stocks onto user's portfolio. Then updates user's account balance
             db.Stock.create(buyRequest)
                 .then(({ _id }) => {
@@ -132,46 +146,62 @@ module.exports = {
                         .catch(err => console.log(err))
                     //Add new stock purchase to portfolio
                     db.Portfolio.findOneAndUpdate({ username: req.body.username }, { $push: { stocks: _id }}, { new: true })
-                        .then(results => res.json(results))
+                        .then(results => res.json({ msg: `Successfully bought ${buyRequest.quantity} shares of ${buyRequest.name}`}))
                         .catch(err => res.json(err))
                 })
+                .catch(err => res.json(err))
     },
     //Delete functions
     sellStock: (req, res) => {
         //Takes in body object {username, name, quantity}
-        db.Portfolio.find({ username: req.body.username}).populate("stocks")
-            .then(results => {
+        console.log(req.body)
+        db.Portfolio.find({ username: req.body.username }).populate("stocks")
+            .then(async results => {
                 console.log(results);
-                let stocks = results.stocks;
+                let stocks = results[0].stocks;
                 let sellResult = {
                     revenue: 0,
                     quantity: 0
                 }
+                const getSellRate = () => {
+                    console.log("Awaiting price ========");
+                    return new Promise(resolve => {
+                        axios.get(`https://finnhub.io/api/v1/quote?symbol=${req.body.name}&token=${process.env.apiKey}`)
+                            .then(({ data }) => resolve(data.c))
+                            .catch(err => res.json(err))
+                            })
+                }
+                let sellRate = await getSellRate();
+                console.log(sellRate, "==============");
                 stocks.forEach( stock => {
                     //Finding matches
                     if(stock.name == req.body.name ){
-                        if(req.body.quantity >= stock.quantity){
-                            sellResult.revenue += stock.quantity * stock.priceBought;
+                        if(parseInt(req.body.quantity) >= stock.quantity){
+                            sellResult.revenue += stock.quantity * sellRate;
                             sellResult.quantity += stock.quantity;
-                            db.Portfolio.findByIdAndUpdate({ username: req.body.username}, { $pull: {stocks: stock._id}})
+                            db.Portfolio.findOneAndUpdate({ username: req.body.username}, { $pull: {stocks: stock._id}})
                             .then(results => console.log(results))
                             .catch(err => console.log(err))
                         }
                         else {
-                            sellResult.revenue += stock.priceBought * req.body.quantity;
-                            sellResult.quantity = req.body.quantity;
+                            sellResult.revenue += sellRate * parseInt(req.body.quantity);
+                            sellResult.quantity = parseInt(req.body.quantity);
                             db.Stock.findOneAndUpdate({ _id: stock._id }, { $set: {quantity: stock.quantity - req.body.quantity} })
                                 .then(results => console.log(results))
                                 .catch(err => console.log(err))
-                        }                        
+                        }
+                        //Update transaction array in portfolio
+                        db.Portfolio.findOneAndUpdate({ username: req.body.username}, { $push: { transactions: { quantity: sellResult.quantity, revenue: sellResult.revenue, name: req.body.name, date: JSON.stringify(Date.now()) }}})
+                            .then(results => console.log(results))
+                            .catch(err => console.log(err))
+                        //Update user currency
+                        db.User.findOneAndUpdate({ username: req.body.username }, { $inc: { currency: sellResult.revenue }})
+                            .then(results => console.log(results))
+                            .catch(err => console.log(err))
                     }
                 })
-                if(sellResult.quantity > 0){
-                    db.Portfolio.findOneAndUpdate({ username: req.body.username}, { $push: { quantity: sellResult.quantity, revenue: sellResult.revenue, name: req.body.name}})
-                        .then(results => console.log(results))
-                        .catch(err => console.log(err))
-                }
                 res.status(200).json({msg: `Successfully sold ${sellResult.quantity} shares of ${req.body.name} stock.`, result: sellResult})
             })
+            .catch(err => res.json(err))
     }
 }
