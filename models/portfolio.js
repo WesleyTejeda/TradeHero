@@ -18,17 +18,6 @@ const portfolioSchema = new Schema ({
         }
     ],
     transactions: [
-        {
-            quantity: {
-                type: Number
-            },
-            revenue: {
-                type: Number
-            },
-            name: {
-                type: String
-            }
-        }
     ]
 })
 
